@@ -2,7 +2,7 @@
 // Sample Jenkins file template
 pipeline {
     agent {
-        dockerContainer { image 'node:20.11.1-alpine3.19' }
+        dockerContainer { image 'jenkins/agent:latest-bookworm' }
         // dockerfile true
         // Equivalent to "docker build -f Dockerfile.build --build-arg version=1.0.2 ./build/
         // dockerfile {
