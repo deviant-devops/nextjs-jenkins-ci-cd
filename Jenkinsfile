@@ -2,16 +2,16 @@
 // Sample Jenkins file template
 pipeline {
     agent {
-        dockerContainer { image 'jenkins/agent:latest-bookworm' }
+        // dockerContainer { image 'jenkins/agent:latest-bookworm' }
         // dockerfile true
         // Equivalent to "docker build -f Dockerfile.build --build-arg version=1.0.2 ./build/
-        // dockerfile {
-        //     filename 'Dockerfile.build'
+        dockerfile {
+            filename 'Dockerfile.ci'
         //     dir 'build'
         //     label 'my-defined-label'
         //     additionalBuildArgs  '--build-arg version=1.0.2'
         //     args '-v /tmp:/tmp'
-        // }
+        }
     }
     stages {
         stage('Check Node version') {
