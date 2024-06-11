@@ -1,7 +1,7 @@
 FROM debian:stable
 
 RUN apt-get update \
-    && apt-get install -y curl \
+    && apt-get install -y curl git\
     && apt-get -y autoclean
 
 ENV NVM_VERSION v0.39.7
