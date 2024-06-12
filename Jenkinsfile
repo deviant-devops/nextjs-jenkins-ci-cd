@@ -48,5 +48,11 @@ pipeline {
                 sh 'docker --version'
             }
         }
+
+        stage('Check Build ID') {
+            steps {
+                echo "Running ${env.BUILD_ID} on ${env.JENKINS_URL}"
+            }
+        }
     }
 }
