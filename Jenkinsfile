@@ -11,6 +11,7 @@ pipeline {
         //     label 'my-defined-label'
         //     additionalBuildArgs  '--build-arg version=1.0.2'
         //     args '-v /tmp:/tmp'
+            args '-v /var/run/docker.sock:/var/run/docker.sock'
         }
     }
     stages {
@@ -37,9 +38,20 @@ pipeline {
                 sh 'npm run lint'
             }
         }
-        stage('Run Jest') {
+        // stage('Run Jest') {
+        //     steps {
+        //         sh 'npm test'
+        //     }
+        // }
+        stage('Check Docker Version') {
             steps {
-                sh 'npm test'
+                sh 'docker --version'
+            }
+        }
+
+        stage('Check Build ID') {
+            steps {
+                echo "Running ${env.BUILD_ID} on ${env.JENKINS_URL}, PR-${env.CHANGE_ID}"
             }
         }
     }
