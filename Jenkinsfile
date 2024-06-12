@@ -11,6 +11,7 @@ pipeline {
         //     label 'my-defined-label'
         //     additionalBuildArgs  '--build-arg version=1.0.2'
         //     args '-v /tmp:/tmp'
+            args '-v /var/run/docker.sock:/var/run/docker.sock'
         }
     }
     stages {
@@ -43,7 +44,6 @@ pipeline {
         //     }
         // }
         stage('Check Docker Version') {
-            agent any
             steps {
                 sh 'docker --version'
             }

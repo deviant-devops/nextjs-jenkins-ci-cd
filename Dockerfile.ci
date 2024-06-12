@@ -22,3 +22,6 @@ RUN echo "source $NVM_DIR/nvm.sh && \
 # confirm installation
 RUN node -v
 RUN npm -v
+
+RUN curl -fsSL https://get.docker.com | sh
+RUN docker --version
