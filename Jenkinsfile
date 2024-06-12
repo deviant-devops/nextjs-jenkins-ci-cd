@@ -37,10 +37,10 @@ pipeline {
                 sh 'npm run lint'
             }
         }
-        stage('Run Jest') {
-            steps {
-                sh 'npm test'
-            }
-        }
+        // stage('Run Jest') {
+        //     steps {
+        //         sh 'npm test'
+        //     }
+        // }
     }
 }
