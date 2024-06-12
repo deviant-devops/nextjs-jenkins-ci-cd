@@ -82,8 +82,8 @@ pipeline {
                         sh "echo Username is $USERNAME"
                         sh "echo Password is $PASSWORD"
                         sh "echo $PASSWORD | gh auth login --with-token"
-                        sh "echo ${GIT_REPO_NAME}"
-                        sh "echo ${GIT_USER_REPO_NAME}"
+                        sh "echo ${env.REPO_OWNER}"
+                        sh "echo ${env.REPO_NAME}"
                         sh "gh pr comment ${env.CHANGE_ID} --body '${commentMessage}' --repo ${repoInfo}"
                     }
                 }
