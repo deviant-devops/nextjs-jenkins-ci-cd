@@ -54,5 +54,19 @@ pipeline {
                 echo "Running ${env.BUILD_ID} on ${env.JENKINS_URL}, PR-${env.CHANGE_ID}"
             }
         }
+
+        stage('Example') {
+            steps {
+                // Use withCredentials to pass username and password credentials
+                withCredentials([usernamePassword(credentialsId: 'deviant-devops',
+                    passwordVariable: 'PASSWORD',
+                    usernameVariable: 'USERNAME')]) {
+                    // Inside this block, you can use USERNAME and PASSWORD variables
+                    // For example:
+                    sh "echo Username is $USERNAME"
+                    sh "echo Password is $PASSWORD"
+                }
+            }
+        }
     }
 }
