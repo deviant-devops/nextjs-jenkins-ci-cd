@@ -42,10 +42,11 @@ pipeline {
         //         sh 'npm test'
         //     }
         // }
-        stage('Check Docker Version')
+        stage('Check Docker Version') {
             agent any
             steps {
                 sh 'docker --version'
             }
+        }
     }
 }
