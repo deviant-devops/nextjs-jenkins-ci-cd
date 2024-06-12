@@ -65,15 +65,12 @@ pipeline {
                     passwordVariable: 'PASSWORD',
                     usernameVariable: 'USERNAME')]) {
                     script {
+                        def commentMessage = 'Comment from Jenkins!'
                         // Inside this block, you can use USERNAME and PASSWORD variables
                         // For example:
                         sh "echo Username is $USERNAME"
                         sh "echo Password is $PASSWORD"
-                        sh "gh auth login --with-token <<< ${PASSWORD}"
-
-                        /* groovylint-disable-next-line NoDef, VariableTypeRequired */
-                        def commentMessage = 'Comment from Jenkins!'
-
+                        sh "gh auth login --with-token <<< $PASSWORD"
                         sh "gh pr comment ${env.CHANGE_ID} --body '${commentMessage}' --repo $USERNAME/$REPO_NAME"
                     }
                 }
