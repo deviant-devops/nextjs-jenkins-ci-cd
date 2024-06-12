@@ -70,7 +70,7 @@ pipeline {
                         // For example:
                         sh "echo Username is $USERNAME"
                         sh "echo Password is $PASSWORD"
-                        sh "gh auth login --with-token $PASSWORD"
+                        sh "gh auth login --with-token <<< ${PASSWORD}"
                         sh "gh pr comment ${env.CHANGE_ID} --body '${commentMessage}' --repo $USERNAME/$REPO_NAME"
                     }
                 }
