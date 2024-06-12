@@ -55,7 +55,10 @@ pipeline {
             }
         }
 
-        stage('Example') {
+        stage('Pull Request - merge if successful') {
+            when {
+                branch 'PR-*'
+            }
             steps {
                 // Use withCredentials to pass username and password credentials
                 withCredentials([usernamePassword(credentialsId: 'deviant-devops',
@@ -65,6 +68,8 @@ pipeline {
                     // For example:
                     sh "echo Username is $USERNAME"
                     sh "echo Password is $PASSWORD"
+                    sh "gh auth login --with-token $PASSWORD"
+                    sh "gh pr comment ${env.CHANGE_ID} --body 'Comment from Jenkins'"
                 }
             }
         }
