@@ -66,9 +66,17 @@ pipeline {
                         passwordVariable: 'PASSWORD',
                         usernameVariable: 'USERNAME')]) {
                         
+                        // Extract owner and repo name from GIT_URL
+                        def gitUrl = env.GIT_URL
+                        def repoInfo = gitUrl.split('/')[-2..-1].join('/').replace('.git', '')
+                        
+                        env.REPO_OWNER = repoInfo.split('/')[0]
+                        env.REPO_NAME = repoInfo.split('/')[1]
+
+                        echo "Repository owner: ${env.REPO_OWNER}"
+                        echo "Repository name: ${env.REPO_NAME}"
+
                         def commentMessage = 'Comment from Jenkins!'
-                        def GIT_REPO_NAME = env.GIT_URL.replaceFirst(/^.*\/([^\/]+?).git$/, '$1')
-                        def GIT_USER_REPO_NAME = env.GIT_URL.replaceFirst(/^.*?(?::\/\/.*?\/|:)(.*).git$/. '$1')
                         // Inside this block, you can use USERNAME and PASSWORD variables
                         // For example:
                         sh "echo Username is $USERNAME"
@@ -76,7 +84,7 @@ pipeline {
                         sh "echo $PASSWORD | gh auth login --with-token"
                         sh "echo ${GIT_REPO_NAME}"
                         sh "echo ${GIT_USER_REPO_NAME}"
-                        sh "gh pr comment ${env.CHANGE_ID} --body '${commentMessage}' --repo $USERNAME/$GIT_REPO_NAME"
+                        sh "gh pr comment ${env.CHANGE_ID} --body '${commentMessage}' --repo ${repoInfo}"
                     }
                 }
             }
