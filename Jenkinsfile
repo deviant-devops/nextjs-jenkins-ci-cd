@@ -51,7 +51,7 @@ pipeline {
 
         stage('Check Build ID') {
             steps {
-                echo "Running ${env.BUILD_ID} on ${env.JENKINS_URL}"
+                echo "Running ${env.BUILD_ID} on ${env.JENKINS_URL}, PR-${env.CHANGE_ID}"
             }
         }
     }
