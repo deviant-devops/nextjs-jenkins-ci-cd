@@ -61,10 +61,11 @@ pipeline {
             }
             steps {
                 // Use withCredentials to pass username and password credentials
-                withCredentials([usernamePassword(credentialsId: 'deviant-devops',
-                    passwordVariable: 'PASSWORD',
-                    usernameVariable: 'USERNAME')]) {
-                    script {
+                script {
+                    withCredentials([usernamePassword(credentialsId: 'deviant-devops',
+                        passwordVariable: 'PASSWORD',
+                        usernameVariable: 'USERNAME')]) {
+                        
                         def commentMessage = 'Comment from Jenkins!'
                         // Inside this block, you can use USERNAME and PASSWORD variables
                         // For example:
