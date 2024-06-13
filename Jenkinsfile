@@ -55,6 +55,20 @@ pipeline {
             }
         }
 
+        stage('Get Repo Information') {
+             // Extract owner and repo name from GIT_URL
+            def gitUrl = env.GIT_URL
+            def repoInfo = gitUrl.split('/')[-2..-1].join('/').replace('.git', '')
+            
+            env.REPO_OWNER = repoInfo.split('/')[0]
+            env.REPO_NAME = repoInfo.split('/')[1]
+            env.REPO_INFO = repoInfo
+
+            echo "Repository owner: ${env.REPO_OWNER}"
+            echo "Repository name: ${env.REPO_NAME}"
+            echo "Repository: ${env.REPO_INFO}"
+        }
+
 
         stage('Add Comment to Pull Request') {
             when { // Only run steps if pull request
@@ -67,25 +81,11 @@ pipeline {
                         passwordVariable: 'PASSWORD',
                         usernameVariable: 'USERNAME')]) {
                         
-                        // Extract owner and repo name from GIT_URL
-                        def gitUrl = env.GIT_URL
-                        def repoInfo = gitUrl.split('/')[-2..-1].join('/').replace('.git', '')
-                        
-                        env.REPO_OWNER = repoInfo.split('/')[0]
-                        env.REPO_NAME = repoInfo.split('/')[1]
-
-                        echo "Repository owner: ${env.REPO_OWNER}"
-                        echo "Repository name: ${env.REPO_NAME}"
-
                         def commentMessage = 'Comment from Jenkins!'
                         // Inside this block, you can use USERNAME and PASSWORD variables
                         // For example:
-                        sh "echo Username is $USERNAME"
-                        sh "echo Password is $PASSWORD"
                         sh "echo $PASSWORD | gh auth login --with-token"
-                        sh "echo ${env.REPO_OWNER}"
-                        sh "echo ${env.REPO_NAME}"
-                        sh "gh pr comment ${env.CHANGE_ID} --body '${commentMessage}' --repo ${repoInfo}"
+                        sh "gh pr comment ${env.CHANGE_ID} --body '${commentMessage}' --repo ${env.REPO_INFO}"
                     }
                 }
             }
