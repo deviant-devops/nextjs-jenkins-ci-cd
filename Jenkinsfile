@@ -54,5 +54,72 @@ pipeline {
                 echo "Running ${env.BUILD_ID} on ${env.JENKINS_URL}, PR-${env.CHANGE_ID}"
             }
         }
+
+
+        stage('Add Comment to Pull Request') {
+            when { // Only run steps if pull request
+                branch 'PR-*'
+            }
+            steps {
+                script {
+                    // Use withCredentials to pass username and password credentials
+                    withCredentials([usernamePassword(credentialsId: 'deviant-devops',
+                        passwordVariable: 'PASSWORD',
+                        usernameVariable: 'USERNAME')]) {
+                        
+                        // Extract owner and repo name from GIT_URL
+                        def gitUrl = env.GIT_URL
+                        def repoInfo = gitUrl.split('/')[-2..-1].join('/').replace('.git', '')
+                        
+                        env.REPO_OWNER = repoInfo.split('/')[0]
+                        env.REPO_NAME = repoInfo.split('/')[1]
+
+                        echo "Repository owner: ${env.REPO_OWNER}"
+                        echo "Repository name: ${env.REPO_NAME}"
+
+                        def commentMessage = 'Comment from Jenkins!'
+                        // Inside this block, you can use USERNAME and PASSWORD variables
+                        // For example:
+                        sh "echo Username is $USERNAME"
+                        sh "echo Password is $PASSWORD"
+                        sh "echo $PASSWORD | gh auth login --with-token"
+                        sh "echo ${env.REPO_OWNER}"
+                        sh "echo ${env.REPO_NAME}"
+                        sh "gh pr comment ${env.CHANGE_ID} --body '${commentMessage}' --repo ${repoInfo}"
+                    }
+                }
+            }
+        }
+
+        stage('Build Docker Image') {
+            when { // Only run steps if pull request
+                branch 'MAIN'
+            }
+            steps {
+                script {
+                    // Build the Docker image
+                    def imageName = "${env.REPO_OWNER}/${env.REPO_NAME}:latest"
+                    sh "docker build -t ${imageName} ."
+                }
+            }
+        }
+
+        stage('Push Docker Image to Docker Hub') {
+            when { // Only run steps if pull request
+                branch 'MAIN'
+            }
+            steps {
+                script {
+                    withCredentials([usernamePassword(credentialsId: 'docker-hub-deviantdevops', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
+                        // Log in to Docker Hub
+                        sh "echo ${DOCKER_PASSWORD} | docker login -u ${DOCKER_USERNAME} --password-stdin"
+                        
+                        // Push the Docker image
+                        def imageName = "${env.REPO_OWNER}/${env.REPO_NAME}:latest"
+                        sh "docker push ${imageName}"
+                    }
+                }
+            }
+        }
     }
 }
