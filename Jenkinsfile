@@ -57,16 +57,20 @@ pipeline {
 
         stage('Get Repo Information') {
              // Extract owner and repo name from GIT_URL
-            def gitUrl = env.GIT_URL
-            def repoInfo = gitUrl.split('/')[-2..-1].join('/').replace('.git', '')
-            
-            env.REPO_OWNER = repoInfo.split('/')[0]
-            env.REPO_NAME = repoInfo.split('/')[1]
-            env.REPO_INFO = repoInfo
+            steps {
+                script {
+                    def gitUrl = env.GIT_URL
+                    def repoInfo = gitUrl.split('/')[-2..-1].join('/').replace('.git', '')
+                    
+                    env.REPO_OWNER = repoInfo.split('/')[0]
+                    env.REPO_NAME = repoInfo.split('/')[1]
+                    env.REPO_INFO = repoInfo
 
-            echo "Repository owner: ${env.REPO_OWNER}"
-            echo "Repository name: ${env.REPO_NAME}"
-            echo "Repository: ${env.REPO_INFO}"
+                    echo "Repository owner: ${env.REPO_OWNER}"
+                    echo "Repository name: ${env.REPO_NAME}"
+                    echo "Repository: ${env.REPO_INFO}"
+                }   
+            }
         }
 
 
