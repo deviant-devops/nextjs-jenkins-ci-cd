@@ -62,9 +62,11 @@ pipeline {
                     def gitUrl = env.GIT_URL
                     def repoInfo = gitUrl.split('/')[-2..-1].join('/').replace('.git', '')
                     
+                    // env.REPO_OWNER = repoInfo.split('/')[0]
                     env.REPO_OWNER = repoInfo.split('/')[0]
                     env.REPO_NAME = repoInfo.split('/')[1]
-                    env.REPO_INFO = repoInfo
+                    // env.REPO_INFO = repoInfo
+                    env.REPO_INFO = "${env.REPO_OWNER}/${env.REPO_NAME}"
 
                     echo "Repository owner: ${env.REPO_OWNER}"
                     echo "Repository name: ${env.REPO_NAME}"
