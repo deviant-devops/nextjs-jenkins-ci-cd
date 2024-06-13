@@ -87,7 +87,7 @@ pipeline {
                         def commentMessage = 'Comment from Jenkins!'
                         // Inside this block, you can use USERNAME and PASSWORD variables
                         // For example:
-                        sh 'echo $PASSWORD | gh auth login --with-token'
+                        sh 'echo $PASSWORD | gh auth login --with-token' // use single quotes for sensitive info like passwords
                         sh "gh pr comment ${env.CHANGE_ID} --body '${commentMessage}' --repo ${env.REPO_INFO}"
                     }
                 }
@@ -102,7 +102,7 @@ pipeline {
                 script {
                     withCredentials([usernamePassword(credentialsId: 'docker-hub-deviantdevops', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
                         // Log in to Docker Hub
-                        sh 'echo $DOCKER_PASSWORD | docker login -u ${DOCKER_USERNAME} --password-stdin'
+                        sh 'echo $DOCKER_PASSWORD | docker login -u ${DOCKER_USERNAME} --password-stdin' // use single quotes for sensitive info like passwords
                         def imageName = "${DOCKER_USERNAME}/${env.REPO_NAME}:latest"
                         sh "docker build -t ${imageName} ."
                         sh "docker push ${imageName}"
