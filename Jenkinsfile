@@ -15,6 +15,11 @@ pipeline {
         }
     }
     stages {
+        stage('Print environment variables') {
+            steps {
+                echo sh(script: 'env|sort', returnStdout: true)
+            }
+        }
         stage('Check Node version') {
             steps {
                 sh 'node --version'
