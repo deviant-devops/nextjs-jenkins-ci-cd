@@ -101,21 +101,21 @@ pipeline {
             }
         }
 
-        stage('Merge Pull Request') {
-            when {
-                branch 'PR-*'
-                // expression { env.BRANCH_NAME.startsWith('PR-') }
-            }
-            steps {
-                script {
-                    // def prNumber = env.BRANCH_NAME.split('-')[1]
-                    // sh """
-                    //     gh pr merge ${prNumber} --merge --delete-branch --repo ${env.MAIN_GIT_REPO_URL}
-                    // """
-                    gh pr merge ${env.CHANGE_ID} --merge --delete-branch --repo ${env.GIT_URL}
-                }
-            }
-        }
+        // stage('Merge Pull Request') {
+        //     when {
+        //         branch 'PR-*'
+        //         // expression { env.BRANCH_NAME.startsWith('PR-') }
+        //     }
+        //     steps {
+        //         script {
+        //             // def prNumber = env.BRANCH_NAME.split('-')[1]
+        //             // sh """
+        //             //     gh pr merge ${prNumber} --merge --delete-branch --repo ${env.MAIN_GIT_REPO_URL}
+        //             // """
+        //             gh pr merge ${env.CHANGE_ID} --merge --delete-branch --repo ${env.GIT_URL}
+        //         }
+        //     }
+        // }
 
         // stage('Generate New SemVer Tag') {
         //     when {
