@@ -88,34 +88,34 @@ pipeline {
             }
         }
 
-        // stage('Add Comment to Pull Request') {
-        //     when { // Only run steps if pull request
-        //         branch 'PR-*'
-        //         // expression { env.BRANCH_NAME.startsWith('PR-') }
-        //     }
-        //     steps {
-        //         script {
-        //             def commentMessage = "Finished Testing PR-${env.CHANGE_ID}. All successful, will now merge PR with main."
-        //             sh "gh pr comment ${env.CHANGE_ID} --body '${commentMessage}' --repo ${env.REPO_INFO}"
-        //         }
-        //     }
-        // }
+        stage('Add Comment to Pull Request') {
+            when { // Only run steps if pull request
+                branch 'PR-*'
+                // expression { env.BRANCH_NAME.startsWith('PR-') }
+            }
+            steps {
+                script {
+                    def commentMessage = "Finished Testing PR-${env.CHANGE_ID}. All successful, will now merge PR with main."
+                    sh "gh pr comment ${env.CHANGE_ID} --body '${commentMessage}' --repo ${env.REPO_INFO}"
+                }
+            }
+        }
 
-        // stage('Merge Pull Request') {
-        //     when {
-        //         branch 'PR-*'
-        //         // expression { env.BRANCH_NAME.startsWith('PR-') }
-        //     }
-        //     steps {
-        //         script {
-        //             // def prNumber = env.BRANCH_NAME.split('-')[1]
-        //             // sh """
-        //             //     gh pr merge ${prNumber} --merge --delete-branch --repo ${env.MAIN_GIT_REPO_URL}
-        //             // """
-        //             gh pr merge ${env.CHANGE_ID} --merge --delete-branch --repo ${env.GIT_URL}
-        //         }
-        //     }
-        // }
+        stage('Merge Pull Request') {
+            when {
+                branch 'PR-*'
+                // expression { env.BRANCH_NAME.startsWith('PR-') }
+            }
+            steps {
+                script {
+                    // def prNumber = env.BRANCH_NAME.split('-')[1]
+                    // sh """
+                    //     gh pr merge ${prNumber} --merge --delete-branch --repo ${env.MAIN_GIT_REPO_URL}
+                    // """
+                    gh pr merge ${env.CHANGE_ID} --merge --delete-branch --repo ${env.GIT_URL}
+                }
+            }
+        }
 
         // stage('Generate New SemVer Tag') {
         //     when {
