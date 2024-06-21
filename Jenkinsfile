@@ -78,23 +78,106 @@ pipeline {
             }
         }
 
-        stage('Add Comment to Pull Request') {
-            when { // Only run steps if pull request
-                branch 'PR-*'
-            }
+        stage('Authenticate with GitHub') {
             steps {
                 script {
-                    // Use withCredentials to pass username and password credentials
                     withCredentials([usernamePassword(credentialsId: 'deviant-devops',
                         passwordVariable: 'PASSWORD',
                         usernameVariable: 'USERNAME')]) {
-                        
-                        def commentMessage = 'Comment from Jenkins!'
-                        // Inside this block, you can use USERNAME and PASSWORD variables
-                        // For example:
                         sh 'echo $PASSWORD | gh auth login --with-token' // use single quotes for sensitive info like passwords
-                        sh "gh pr comment ${env.CHANGE_ID} --body '${commentMessage}' --repo ${env.REPO_INFO}"
                     }
+                }
+            }
+        }
+
+        stage('Add Comment to Pull Request') {
+            when { // Only run steps if pull request
+                branch 'PR-*'
+                // expression { env.BRANCH_NAME.startsWith('PR-') }
+            }
+            steps {
+                script {
+                    def commentMessage = "Finished Testing PR-${env.CHANGE_ID}. All successful, will now merge PR with main."
+                    sh "gh pr comment ${env.CHANGE_ID} --body '${commentMessage}' --repo ${env.REPO_INFO}"
+                }
+            }
+        }
+
+        stage('Merge Pull Request') {
+            when {
+                branch 'PR-*'
+                // expression { env.BRANCH_NAME.startsWith('PR-') }
+            }
+            steps {
+                script {
+                    // def prNumber = env.BRANCH_NAME.split('-')[1]
+                    // sh """
+                    //     gh pr merge ${prNumber} --merge --delete-branch --repo ${env.MAIN_GIT_REPO_URL}
+                    // """
+                    gh pr merge ${env.CHANGE_ID} --merge --delete-branch --repo ${env.GIT_URL}
+                }
+            }
+        }
+
+        stage('Generate New SemVer Tag') {
+            when {
+                branch 'main'
+            }
+            steps {
+                script {
+                    def currentVersion = sh(script: """
+                        gh release list --repo ${env.GIT_URL} --limit 1 --json tagName --jq '.[0].tagName'
+                    """, returnStdout: true).trim()
+                    
+                    def (major, minor, patch) = currentVersion.tokenize('.')
+                    def newVersion = "${major}.${minor}.${(patch.toInteger() + 1)}"
+                    env.NEW_IMAGE_TAG = newVersion
+                    echo "New Version: ${env.NEW_IMAGE_TAG}"
+                }
+            }
+        }
+
+        stage('Generate Release Notes') {
+            when {
+                branch 'main'
+            }
+            steps {
+                script {
+                    // Get the merged PRs since the last release
+                    def prList = sh(script: """
+                        gh pr list --repo ${env.GIT_URL} --state merged --json number,headRefName,title --jq '.[] | {number, headRefName, title}'
+                    """, returnStdout: true).trim()
+
+                    // Format release notes
+                    def releaseNotes = "## Release ${env.NEW_IMAGE_TAG}\n\n"
+                    releaseNotes += prList.collect { pr ->
+                        "- PR #${pr.number}: ${pr.title} (${pr.headRefName})"
+                    }.join('\n')
+
+                    env.VERSION_NOTES = releaseNotes
+                    echo "Generated Release Notes:\n${env.VERSION_NOTES}"
+                }
+            }
+        }
+
+        stage('Create Git Tag with Release Notes') {
+            when {
+                branch 'main'
+            }
+            steps {
+                script {
+                    // Tag the Git repository with release notes
+                    sh """
+                        git tag -a ${env.NEW_IMAGE_TAG} -m "${env.VERSION_NOTES}"
+                        git push origin ${env.NEW_IMAGE_TAG}
+                    """
+
+                    // Create a GitHub release with release notes
+                    sh """
+                        gh release create ${env.NEW_IMAGE_TAG} \
+                            --notes "${env.VERSION_NOTES}" \
+                            --repo ${env.GIT_URL}
+                    """
                 }
             }
         }
@@ -109,8 +192,11 @@ pipeline {
                         // Log in to Docker Hub
                         sh 'echo $DOCKER_PASSWORD | docker login -u ${DOCKER_USERNAME} --password-stdin' // use single quotes for sensitive info like passwords
                         def imageName = "${DOCKER_USERNAME}/${env.REPO_NAME}:latest"
+                        def imageName2 = "${DOCKER_USERNAME}/${env.REPO_NAME}:v${env.NEW_IMAGE_TAG}"
                         sh "docker build -t ${imageName} ."
+                        sh "docker build -t ${imageName2} ."
                         sh "docker push ${imageName}"
+                        sh "docker push ${imageName2}"
                     }
                 }
             }
