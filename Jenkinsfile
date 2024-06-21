@@ -101,103 +101,103 @@ pipeline {
             }
         }
 
-        // stage('Merge Pull Request') {
-        //     when {
-        //         branch 'PR-*'
-        //         // expression { env.BRANCH_NAME.startsWith('PR-') }
-        //     }
-        //     steps {
-        //         script {
-        //             // def prNumber = env.BRANCH_NAME.split('-')[1]
-        //             // sh """
-        //             //     gh pr merge ${prNumber} --merge --delete-branch --repo ${env.MAIN_GIT_REPO_URL}
-        //             // """
-        //             gh pr merge ${env.CHANGE_ID} --merge --delete-branch --repo ${env.GIT_URL}
-        //         }
-        //     }
-        // }
+        stage('Merge Pull Request') {
+            when {
+                branch 'PR-*'
+                // expression { env.BRANCH_NAME.startsWith('PR-') }
+            }
+            steps {
+                script {
+                    // def prNumber = env.BRANCH_NAME.split('-')[1]
+                    // sh """
+                    //     gh pr merge ${prNumber} --merge --delete-branch --repo ${env.MAIN_GIT_REPO_URL}
+                    // """
+                    sh "gh pr merge ${env.CHANGE_ID} --merge --delete-branch --repo ${env.GIT_URL}"
+                }
+            }
+        }
 
-        // stage('Generate New SemVer Tag') {
-        //     when {
-        //         branch 'main'
-        //     }
-        //     steps {
-        //         script {
-        //             def currentVersion = sh(script: """
-        //                 gh release list --repo ${env.GIT_URL} --limit 1 --json tagName --jq '.[0].tagName'
-        //             """, returnStdout: true).trim()
+        stage('Generate New SemVer Tag') {
+            when {
+                branch 'main'
+            }
+            steps {
+                script {
+                    def currentVersion = sh(script: """
+                        gh release list --repo ${env.GIT_URL} --limit 1 --json tagName --jq '.[0].tagName'
+                    """, returnStdout: true).trim()
                     
-        //             def (major, minor, patch) = currentVersion.tokenize('.')
-        //             def newVersion = "${major}.${minor}.${(patch.toInteger() + 1)}"
-        //             env.NEW_IMAGE_TAG = newVersion
-        //             echo "New Version: ${env.NEW_IMAGE_TAG}"
-        //         }
-        //     }
-        // }
+                    def (major, minor, patch) = currentVersion.tokenize('.')
+                    def newVersion = "${major}.${minor}.${(patch.toInteger() + 1)}"
+                    env.NEW_IMAGE_TAG = newVersion
+                    echo "New Version: ${env.NEW_IMAGE_TAG}"
+                }
+            }
+        }
 
-        // stage('Generate Release Notes') {
-        //     when {
-        //         branch 'main'
-        //     }
-        //     steps {
-        //         script {
-        //             // Get the merged PRs since the last release
-        //             def prList = sh(script: """
-        //                 gh pr list --repo ${env.GIT_URL} --state merged --json number,headRefName,title --jq '.[] | {number, headRefName, title}'
-        //             """, returnStdout: true).trim()
+        stage('Generate Release Notes') {
+            when {
+                branch 'main'
+            }
+            steps {
+                script {
+                    // Get the merged PRs since the last release
+                    def prList = sh(script: """
+                        gh pr list --repo ${env.GIT_URL} --state merged --json number,headRefName,title --jq '.[] | {number, headRefName, title}'
+                    """, returnStdout: true).trim()
 
-        //             // Format release notes
-        //             def releaseNotes = "## Release ${env.NEW_IMAGE_TAG}\n\n"
-        //             releaseNotes += prList.collect { pr ->
-        //                 "- PR #${pr.number}: ${pr.title} (${pr.headRefName})"
-        //             }.join('\n')
+                    // Format release notes
+                    def releaseNotes = "## Release ${env.NEW_IMAGE_TAG}\n\n"
+                    releaseNotes += prList.collect { pr ->
+                        "- PR #${pr.number}: ${pr.title} (${pr.headRefName})"
+                    }.join('\n')
 
-        //             env.VERSION_NOTES = releaseNotes
-        //             echo "Generated Release Notes:\n${env.VERSION_NOTES}"
-        //         }
-        //     }
-        // }
+                    env.VERSION_NOTES = releaseNotes
+                    echo "Generated Release Notes:\n${env.VERSION_NOTES}"
+                }
+            }
+        }
 
-        // stage('Create Git Tag with Release Notes') {
-        //     when {
-        //         branch 'main'
-        //     }
-        //     steps {
-        //         script {
-        //             // Tag the Git repository with release notes
-        //             sh """
-        //                 git tag -a ${env.NEW_IMAGE_TAG} -m "${env.VERSION_NOTES}"
-        //                 git push origin ${env.NEW_IMAGE_TAG}
-        //             """
+        stage('Create Git Tag with Release Notes') {
+            when {
+                branch 'main'
+            }
+            steps {
+                script {
+                    // Tag the Git repository with release notes
+                    sh """
+                        git tag -a ${env.NEW_IMAGE_TAG} -m "${env.VERSION_NOTES}"
+                        git push origin ${env.NEW_IMAGE_TAG}
+                    """
 
-        //             // Create a GitHub release with release notes
-        //             sh """
-        //                 gh release create ${env.NEW_IMAGE_TAG} \
-        //                     --notes "${env.VERSION_NOTES}" \
-        //                     --repo ${env.GIT_URL}
-        //             """
-        //         }
-        //     }
-        // }
+                    // Create a GitHub release with release notes
+                    sh """
+                        gh release create ${env.NEW_IMAGE_TAG} \
+                            --notes "${env.VERSION_NOTES}" \
+                            --repo ${env.GIT_URL}
+                    """
+                }
+            }
+        }
 
-        // stage('Build and Push Docker Image to Docker Hub') {
-        //     when { // Only run steps if pull request
-        //         branch 'MAIN'
-        //     }
-        //     steps {
-        //         script {
-        //             withCredentials([usernamePassword(credentialsId: 'docker-hub-deviantdevops', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
-        //                 // Log in to Docker Hub
-        //                 sh 'echo $DOCKER_PASSWORD | docker login -u ${DOCKER_USERNAME} --password-stdin' // use single quotes for sensitive info like passwords
-        //                 def imageName = "${DOCKER_USERNAME}/${env.REPO_NAME}:latest"
-        //                 def imageName2 = "${DOCKER_USERNAME}/${env.REPO_NAME}:v${env.NEW_IMAGE_TAG}"
-        //                 sh "docker build -t ${imageName} ."
-        //                 sh "docker build -t ${imageName2} ."
-        //                 sh "docker push ${imageName}"
-        //                 sh "docker push ${imageName2}"
-        //             }
-        //         }
-        //     }
-        // }
+        stage('Build and Push Docker Image to Docker Hub') {
+            when { // Only run steps if pull request
+                branch 'MAIN'
+            }
+            steps {
+                script {
+                    withCredentials([usernamePassword(credentialsId: 'docker-hub-deviantdevops', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
+                        // Log in to Docker Hub
+                        sh 'echo $DOCKER_PASSWORD | docker login -u ${DOCKER_USERNAME} --password-stdin' // use single quotes for sensitive info like passwords
+                        def imageName = "${DOCKER_USERNAME}/${env.REPO_NAME}:latest"
+                        def imageName2 = "${DOCKER_USERNAME}/${env.REPO_NAME}:v${env.NEW_IMAGE_TAG}"
+                        sh "docker build -t ${imageName} ."
+                        sh "docker build -t ${imageName2} ."
+                        sh "docker push ${imageName}"
+                        sh "docker push ${imageName2}"
+                    }
+                }
+            }
+        }
     }
 }
