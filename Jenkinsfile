@@ -156,11 +156,12 @@ pipeline {
                     """, returnStdout: true).trim()
 
                     echo prList
+                    echo prList.size()
 
                     // Format release notes
                     def releaseNotes = "## Release ${env.NEW_IMAGE_TAG}\n\n"
                     releaseNotes += prList.collect { pr ->
-                        "- PR #${pr.number}: ${pr.title} (${pr.headRefName})"
+                        return "- PR #${pr.number}: ${pr.title} (${pr.headRefName})"
                     }.join('\n')
 
                     env.VERSION_NOTES = releaseNotes
