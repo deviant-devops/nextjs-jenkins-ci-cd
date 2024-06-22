@@ -156,7 +156,10 @@ pipeline {
                     """, returnStdout: true).trim()
 
                     echo prList
-                    echo prList.getClass()
+                    def prJson = readJSON text: prList
+                    prJson.each { pr ->
+                        echo "PR Title: ${pr.title}"
+                    }
 
                     // Format release notes
                     def releaseNotes = "## Release ${env.NEW_IMAGE_TAG}\n\n"
