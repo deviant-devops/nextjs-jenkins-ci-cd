@@ -156,7 +156,7 @@ pipeline {
                     """, returnStdout: true).trim()
 
                     echo prList
-                    echo prList.size()
+                    echo prList.getClass()
 
                     // Format release notes
                     def releaseNotes = "## Release ${env.NEW_IMAGE_TAG}\n\n"
