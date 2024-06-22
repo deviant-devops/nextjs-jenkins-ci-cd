@@ -125,10 +125,18 @@ pipeline {
                 script {
                     def currentVersion = sh(script: """
                         gh release list --repo ${env.GIT_URL} --limit 1 --json tagName --jq '.[0].tagName'
-                    """, returnStdout: true).trim()
+                    """, returnStdout: true).trim() == '0'
                     
-                    def (major, minor, patch) = currentVersion.tokenize('.')
-                    def newVersion = "${major}.${minor}.${(patch.toInteger() + 1)}"
+                    def newVersion
+
+                    if (currentVersion) {
+                        def (major, minor, patch) = currentVersion.tokenize('.')
+                        newVersion = "${major}.${minor}.${(patch.toInteger() + 1)}"
+                    } else {
+                        // Set the initial version
+                        newVersion = "0.1.0"
+                    }
+
                     env.NEW_IMAGE_TAG = newVersion
                     echo "New Version: ${env.NEW_IMAGE_TAG}"
                 }
