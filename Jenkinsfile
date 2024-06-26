@@ -155,21 +155,16 @@ pipeline {
                         gh pr list --repo ${env.GIT_URL} --state merged --json number,headRefName,title
                     """, returnStdout: true).trim()
 
-                    echo prList
                     def prJson = readJSON(text: prList)
-                    print prJson
-                    prJson.each { pr ->
-                       echo "PR Title: ${pr.title}"
-                    }
 
-                    // // Format release notes
-                    // def releaseNotes = "## Release ${env.NEW_IMAGE_TAG}\n\n"
-                    // releaseNotes += prJson.each { pr ->
-                    //     return "- PR #${pr.number}: ${pr.title} (${pr.headRefName})"
-                    // }.join('\n')
+                    // Format release notes
+                    def releaseNotes = "## Release ${env.NEW_IMAGE_TAG}\n\n"
+                    releaseNotes += prJson.collect { pr ->
+                        return "- PR #${pr.number}: ${pr.title} (${pr.headRefName})"
+                    }.join('\n')
 
-                    // env.VERSION_NOTES = releaseNotes
-                    // echo "Generated Release Notes:\n${env.VERSION_NOTES}"
+                    env.VERSION_NOTES = releaseNotes
+                    echo "Generated Release Notes:\n${env.VERSION_NOTES}"
                 }
             }
         }
