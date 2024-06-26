@@ -156,14 +156,14 @@ pipeline {
                     """, returnStdout: true).trim()
 
                     echo prList
-                    def prJson = readJSON text: prList
+                    def prJson = readJSON(text: prList)
                     prJson.each { pr ->
                         echo "PR Title: ${pr.title}"
                     }
 
                     // Format release notes
                     def releaseNotes = "## Release ${env.NEW_IMAGE_TAG}\n\n"
-                    releaseNotes += prList.collect { pr ->
+                    releaseNotes += prJson.each { pr ->
                         return "- PR #${pr.number}: ${pr.title} (${pr.headRefName})"
                     }.join('\n')
 
