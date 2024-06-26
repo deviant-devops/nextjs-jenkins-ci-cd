@@ -184,9 +184,10 @@ pipeline {
                             git push origin ${env.NEW_IMAGE_TAG} -f
                         """
                     } else {
-                        sh """
-                            git push origin ${env.NEW_IMAGE_TAG} -f
-                        """
+                        // Push the tag to the repository
+                        withCredentials([usernamePassword(credentialsId: 'git-credentials-id', usernameVariable: 'GIT_USERNAME', passwordVariable: 'GIT_PASSWORD')]) {
+                            sh "git push https://${USERNAME}:${PASSWORD}@github.com/${repoInfo}.git ${env.NEW_IMAGE_TAG}"
+                        }
                     }
 
                     // Create a GitHub release with release notes
