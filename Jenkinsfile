@@ -181,16 +181,14 @@ pipeline {
                     if (!tagExists) {
                         sh """
                             git tag -a -f ${env.NEW_IMAGE_TAG} -m "${env.VERSION_NOTES}"
-                            git push origin ${env.NEW_IMAGE_TAG} -f
                         """
-                    } else {
-                        // Push the tag to the repository
-                        withCredentials([usernamePassword(credentialsId: 'deviant-devops',
+                    } 
+                    withCredentials([usernamePassword(credentialsId: 'deviant-devops',
                         passwordVariable: 'PASSWORD',
                         usernameVariable: 'USERNAME')]) {
-                            sh "git push https://${USERNAME}:${PASSWORD}@github.com/${repoInfo}.git ${env.NEW_IMAGE_TAG}"
+                            sh "git push https://${USERNAME}:${PASSWORD}@github.com/${repoInfo}.git ${env.NEW_IMAGE_TAG} -f" 
                         }
-                    }
+                    
 
                     // Create a GitHub release with release notes
                     sh """
