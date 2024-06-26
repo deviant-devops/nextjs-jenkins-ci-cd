@@ -157,7 +157,7 @@ pipeline {
 
                     echo prList
                     def prJson = readJSON(text: prList)
-                    echo prJson
+                    print prJson
                     // prJson.each { pr ->
                     //     echo "PR Title: ${pr.title}"
                     // }
