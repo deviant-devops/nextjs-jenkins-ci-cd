@@ -185,7 +185,9 @@ pipeline {
                         """
                     } else {
                         // Push the tag to the repository
-                        withCredentials([usernamePassword(credentialsId: 'git-credentials-id', usernameVariable: 'GIT_USERNAME', passwordVariable: 'GIT_PASSWORD')]) {
+                        withCredentials([usernamePassword(credentialsId: 'deviant-devops',
+                        passwordVariable: 'PASSWORD',
+                        usernameVariable: 'USERNAME')]) {
                             sh "git push https://${USERNAME}:${PASSWORD}@github.com/${repoInfo}.git ${env.NEW_IMAGE_TAG}"
                         }
                     }
