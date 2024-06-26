@@ -180,12 +180,12 @@ pipeline {
 
                     if (!tagExists) {
                         sh """
-                            git tag -a ${env.NEW_IMAGE_TAG} -m "${env.VERSION_NOTES}"
-                            git push origin ${env.NEW_IMAGE_TAG}
+                            git tag -a -f ${env.NEW_IMAGE_TAG} -m "${env.VERSION_NOTES}"
+                            git push origin ${env.NEW_IMAGE_TAG} -f
                         """
                     } else {
                         sh """
-                            git push origin ${env.NEW_IMAGE_TAG}
+                            git push origin ${env.NEW_IMAGE_TAG} -f
                         """
                     }
 
