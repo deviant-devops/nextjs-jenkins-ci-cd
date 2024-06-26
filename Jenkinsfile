@@ -152,15 +152,15 @@ pipeline {
                     // Get the merged PRs since the last release
                     // gh pr list --repo ${env.GIT_URL} --state merged --json number,headRefName,title --jq '.[] | {number, headRefName, title}'
                     def prList = sh(script: """
-                        gh pr list --repo ${env.GIT_URL} --state merged --json number,headRefName,title --jq '.[] | {number, headRefName, title}'
+                        gh pr list --repo ${env.GIT_URL} --state merged --json number,headRefName,title
                     """, returnStdout: true).trim()
 
                     echo prList
                     def prJson = readJSON(text: prList)
                     print prJson
-                    // prJson.each { pr ->
-                    //     echo "PR Title: ${pr.title}"
-                    // }
+                    prJson.each { pr ->
+                       echo "PR Title: ${pr.title}"
+                    }
 
                     // // Format release notes
                     // def releaseNotes = "## Release ${env.NEW_IMAGE_TAG}\n\n"
