@@ -175,19 +175,19 @@ pipeline {
             }
             steps {
                 script {
-                    // Tag the Git repository with release notes
-                    sh """
-                        gitTagExists=$(git tag -l ${env.NEW_IMAGE_TAG})
+                    // Check if the tag already exists
+                    def tagExists = sh(script: "git ls-remote --tags origin | grep -w refs/tags/${env.NEW_IMAGE_TAG}", returnStatus: true) == 0
 
-                        if [ -n "$gitTagExists" ]; 
-                        then
-                            echo "tag ${env.NEW_IMAGE_TAG} already exists."
-                        else
-                            git tag -a ${env.NEW_IMAGE_TAG} -m "${env.VERSION_NOTES}"
-                        fi
-
-                        git push origin ${env.NEW_IMAGE_TAG}
-                    """
+                    if (!tagExists) {
+                        sh """
+                            git tag -a ${env.NEW_IMAGE_TAG} -m "${env.VERSION_NOTES}"'
+                            git push origin ${env.NEW_IMAGE_TAG}
+                        """
+                    } else {
+                        sh """
+                            git push origin ${env.NEW_IMAGE_TAG}
+                        """
+                    }
 
                     // Create a GitHub release with release notes
                     sh """
