@@ -212,7 +212,9 @@ pipeline {
                     withCredentials([usernamePassword(credentialsId: 'deviant-devops',
                         passwordVariable: 'PASSWORD',
                         usernameVariable: 'USERNAME')]) {
-                            sh 'git push https://$USERNAME:$PASSWORD@github.com/${env.REPO_INFO}.git ${env.NEW_IMAGE_TAG}'
+                            sh """
+                                git push https://$USERNAME:$PASSWORD@github.com/${env.REPO_INFO}.git ${env.NEW_IMAGE_TAG}
+                            """ 
                         }
                     
                     sh """
