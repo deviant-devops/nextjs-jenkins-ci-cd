@@ -117,27 +117,67 @@ pipeline {
             }
         }
 
-        stage('Generate New SemVer Tag') {
+        // stage('Generate New SemVer Tag') {
+        //     when {
+        //         branch 'main'
+        //     }
+        //     steps {
+        //         script {
+        //             def currentVersion = sh(script: """
+        //                 gh release list --repo ${env.GIT_URL} --limit 1 --json tagName --jq '.[0].tagName'
+        //             """, returnStdout: true).trim()
+                    
+        //             def newVersion
+
+        //             print currentVersion
+
+        //             if (currentVersion) {
+        //                 def (major, minor, patch) = currentVersion.tokenize('.')
+        //                 newVersion = "${major}.${minor}.${(patch.toInteger() + 1)}"
+        //             } else {
+        //                 // Set the initial version
+        //                 newVersion = "0.1.0"
+        //             }
+
+        //             env.NEW_IMAGE_TAG = newVersion
+        //             echo "New Version: ${env.NEW_IMAGE_TAG}"
+        //         }
+        //     }
+        // }
+
+        stage('Determine New Version') {
             when {
                 branch 'main'
             }
             steps {
                 script {
-                    def currentVersion = sh(script: """
-                        gh release list --repo ${env.GIT_URL} --limit 1 --json tagName --jq '.[0].tagName'
-                    """, returnStdout: true).trim()
-                    
-                    def newVersion
+                    // Get the latest tag
+                    def latestTag = sh(script: "git describe --tags `git rev-list --tags --max-count=1`", returnStdout: true).trim()
 
-                    print currentVersion
+                    // Get the commit hash of the latest tag
+                    def latestTagCommit = sh(script: "git rev-list -n 1 ${latestTag}", returnStdout: true).trim()
 
-                    if (currentVersion) {
-                        def (major, minor, patch) = currentVersion.tokenize('.')
-                        newVersion = "${major}.${minor}.${(patch.toInteger() + 1)}"
-                    } else {
-                        // Set the initial version
-                        newVersion = "0.1.0"
+                    // Get the latest commit hash in the current branch
+                    def latestCommit = sh(script: "git rev-parse HEAD", returnStdout: true).trim()
+
+                    echo "Latest tag: ${latestTag}"
+                    echo "Latest tag commit: ${latestTagCommit}"
+                    echo "Latest commit: ${latestCommit}"
+
+                    if (latestTagCommit == latestCommit) {
+                        echo "No new commits since the latest tag. Skipping version update."
+                        currentBuild.result = 'SUCCESS'
+                        return
                     }
+
+                    // Parse the latest version
+                    def (major, minor, patch) = latestTag.replace("v", "").tokenize('.')
+
+                    // Determine the new version (example: increment patch)
+                    patch = patch.toInteger() + 1
+
+                    // Define the new tag name
+                    newVersion = "v${major}.${minor}.${patch}"
 
                     env.NEW_IMAGE_TAG = newVersion
                     echo "New Version: ${env.NEW_IMAGE_TAG}"
