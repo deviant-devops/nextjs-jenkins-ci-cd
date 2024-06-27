@@ -161,8 +161,8 @@ pipeline {
                     def latestCommit = sh(script: "git rev-parse HEAD", returnStdout: true).trim()
 
                     // Get the latest tag
-                    def latestTag = sh(script: "git describe --tags ${latestTagCommit}", returnStdout: true).trim()
-
+                    // def latestTag = sh(script: "git describe --tags ${latestTagCommit}", returnStdout: true).trim()
+                    def latestTag = sh(script: "git ls-remote --tags origin | grep -Eo 'v[0-9.]+$'", returnStdout: true).trim()
 
                     echo "Latest tag: ${latestTag}"
                     echo "Latest tag commit: ${latestTagCommit}"
