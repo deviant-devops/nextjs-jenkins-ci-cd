@@ -232,7 +232,7 @@ pipeline {
                     withCredentials([usernamePassword(credentialsId: 'docker-hub-deviantdevops', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
                         sh 'echo $DOCKER_PASSWORD | docker login -u ${DOCKER_USERNAME} --password-stdin'
                         def imageName = "${DOCKER_USERNAME}/${env.REPO_NAME}:latest"
-                        def imageName2 = "${DOCKER_USERNAME}/${env.REPO_NAME}:v${env.NEW_IMAGE_TAG}"
+                        def imageName2 = "${DOCKER_USERNAME}/${env.REPO_NAME}:${env.NEW_IMAGE_TAG}"
                         sh "docker build -t ${imageName} ."
                         sh "docker build -t ${imageName2} ."
                         sh "docker push ${imageName}"
