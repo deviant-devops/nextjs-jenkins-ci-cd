@@ -262,7 +262,7 @@ pipeline {
 
                         sh """
                             git clone ${env.DEPLOYMENT_GIT_REPO_URL}
-                            cd $(basename ${env.DEPLOYMENT_GIT_REPO_URL} .git)
+                            cd \$(basename ${env.DEPLOYMENT_GIT_REPO_URL} .git)
                         """
                     }
                     
