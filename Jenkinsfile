@@ -280,7 +280,7 @@ pipeline {
                             cd ${repoName}
                             git add ${env.DEPLOYMENT_FILE_PATH}
                             git commit -m "Update image tag to ${env.NEW_IMAGE_TAG}"
-                            git push https://$USERNAME:$PASSWORD@/deviant-devops/nextjs-jenkins-deployment.git main
+                            git push --repo=https://$USERNAME:$PASSWORD@/deviant-devops/nextjs-jenkins-deployment.git --set-upstream https://$USERNAME:$PASSWORD@/deviant-devops/nextjs-jenkins-deployment.git main
                         """
                     }
                 }
