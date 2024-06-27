@@ -18,6 +18,7 @@ pipeline {
             args '-v /var/run/docker.sock:/var/run/docker.sock'
         }
     }
+
     stages {
         stage('Check Build ID') {
             steps {
@@ -233,10 +234,54 @@ pipeline {
                         sh 'echo $DOCKER_PASSWORD | docker login -u ${DOCKER_USERNAME} --password-stdin'
                         def imageName = "${DOCKER_USERNAME}/${env.REPO_NAME}:latest"
                         def imageName2 = "${DOCKER_USERNAME}/${env.REPO_NAME}:${env.NEW_IMAGE_TAG}"
+
+                        env.IMAGE_NAME = "${DOCKER_USERNAME}/${env.REPO_NAME}"
+
                         sh "docker build -t ${imageName} ."
                         sh "docker build -t ${imageName2} ."
                         sh "docker push ${imageName}"
                         sh "docker push ${imageName2}"
+                    }
+                }
+            }
+        }
+
+        stage('Update Deployment Repo') {
+            when {
+                branch 'main'
+            }
+            steps {
+                script {
+                    // Clone the deployment repository
+                    withCredentials([usernamePassword(credentialsId: 'deviant-devops',
+                        passwordVariable: 'PASSWORD',
+                        usernameVariable: 'USERNAME')]) {
+                        
+                        env.DEPLOYMENT_GIT_REPO_URL = "https://github.com/deviant-devops/nextjs-jenkins-deployment.git"
+                        env.DEPLOYMENT_FILE_PATH = "deployment.yaml"
+
+                        sh """
+                            git clone ${env.DEPLOYMENT_GIT_REPO_URL}
+                            cd $(basename ${env.DEPLOYMENT_GIT_REPO_URL} .git)
+                        """
+                    }
+                    
+                    // Update the deployment YAML file
+                    def repoName = env.DEPLOYMENT_GIT_REPO_URL.tokenize('/').last().replace('.git', '')
+                    def deploymentYaml = readFile "${repoName}/${env.DEPLOYMENT_FILE_PATH}"
+                    def newYaml = deploymentYaml.replaceAll("${env.IMAGE_NAME}:.*", "${env.IMAGE_NAME}:${env.NEW_IMAGE_TAG}")
+                    writeFile file: "${repoName}/${env.DEPLOYMENT_FILE_PATH}", text: newYaml
+
+                    // Commit and push the changes
+                    withCredentials([usernamePassword(credentialsId: 'deviant-devops',
+                        passwordVariable: 'PASSWORD',
+                        usernameVariable: 'USERNAME')]) {
+                        sh """
+                            cd ${repoName}
+                            git add ${env.DEPLOYMENT_FILE_PATH}
+                            git commit -m "Update image tag to ${env.NEW_IMAGE_TAG}"
+                            git push https://$USERNAME:$PASSWORD@/deviant-devops/nextjs-jenkins-deployment.git main
+                        """
                     }
                 }
             }
