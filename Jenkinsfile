@@ -1,23 +1,60 @@
 pipeline {
+    /**
+    TODO: 
+    - Update package.json version when updating semver git tag
+     */
     agent {
         // dockerContainer { image 'jenkins/agent:latest-bookworm' }
         // dockerfile true
+
         // Equivalent to "docker build -f Dockerfile.build --build-arg version=1.0.2 ./build/
         dockerfile {
+            //     filename 'Dockerfile.build'
+            //     dir 'build'
+            //     label 'my-defined-label'
+            //     additionalBuildArgs  '--build-arg version=1.0.2'
+            //     args '-v /tmp:/tmp'
             filename 'Dockerfile.ci'
-        //     dir 'build'
-        //     label 'my-defined-label'
-        //     additionalBuildArgs  '--build-arg version=1.0.2'
-        //     args '-v /tmp:/tmp'
             args '-v /var/run/docker.sock:/var/run/docker.sock'
         }
     }
     stages {
+        stage('Check Build ID') {
+            steps {
+                echo "Running ${env.BUILD_ID} on ${env.JENKINS_URL}, PR-${env.CHANGE_ID}"
+            }
+        }
+
+        stage('Get Repo Information') {
+            steps {
+                script {
+                    def gitUrl = env.GIT_URL
+                    def repoInfo = gitUrl.split('/')[-2..-1].join('/').replace('.git', '')
+                    
+                    env.REPO_OWNER = repoInfo.split('/')[0]
+                    env.REPO_NAME = repoInfo.split('/')[1]
+                    env.REPO_INFO = repoInfo
+
+                    echo "Repository owner: ${env.REPO_OWNER}"
+                    echo "Repository name: ${env.REPO_NAME}"
+                    echo "Repository: ${env.REPO_INFO}"
+                }   
+            }
+        }
+
+        stage('Check Docker Version') {
+            steps {
+                sh 'docker --version'
+            }
+        }
+
+        /**  Continuous Integration Section - Linting and Error Checking **/
         stage('Print environment variables') {
             steps {
                 echo sh(script: 'env|sort', returnStdout: true)
             }
         }
+
         stage('Check Node version') {
             steps {
                 sh 'node --version'
@@ -41,56 +78,31 @@ pipeline {
                 sh 'npm run lint'
             }
         }
+        
         // stage('Run Jest') {
         //     steps {
         //         sh 'npm test'
         //     }
         // }
-        stage('Check Docker Version') {
-            steps {
-                sh 'docker --version'
-            }
-        }
+        
+        /**  Continuous Delivery Section - Merging, Tagging, Releasing **/
 
-        stage('Check Build ID') {
-            steps {
-                echo "Running ${env.BUILD_ID} on ${env.JENKINS_URL}, PR-${env.CHANGE_ID}"
-            }
-        }
-
-        stage('Get Repo Information') {
-             // Extract owner and repo name from GIT_URL
-            steps {
-                script {
-                    def gitUrl = env.GIT_URL
-                    def repoInfo = gitUrl.split('/')[-2..-1].join('/').replace('.git', '')
-                    
-                    env.REPO_OWNER = repoInfo.split('/')[0]
-                    env.REPO_NAME = repoInfo.split('/')[1]
-                    env.REPO_INFO = repoInfo
-
-                    echo "Repository owner: ${env.REPO_OWNER}"
-                    echo "Repository name: ${env.REPO_NAME}"
-                    echo "Repository: ${env.REPO_INFO}"
-                }   
-            }
-        }
-
-        stage('Authenticate with GitHub') {
+        stage('Authenticate GitHub CLI') {
             steps {
                 script {
                     withCredentials([usernamePassword(credentialsId: 'deviant-devops',
                         passwordVariable: 'PASSWORD',
                         usernameVariable: 'USERNAME')]) {
-                        sh 'echo $PASSWORD | gh auth login --with-token' // use single quotes for sensitive info like passwords
+                        sh 'echo $PASSWORD | gh auth login --with-token' // use single quotes for sensitive info like passwords or use triple quotes """
                     }
                 }
             }
         }
-
+         
         stage('Add Comment to Pull Request') {
-            when { // Only run steps if pull request
+            when {
                 branch 'PR-*'
+                // same as 
                 // expression { env.BRANCH_NAME.startsWith('PR-') }
             }
             steps {
@@ -104,46 +116,13 @@ pipeline {
         stage('Merge Pull Request') {
             when {
                 branch 'PR-*'
-                // expression { env.BRANCH_NAME.startsWith('PR-') }
             }
             steps {
                 script {
-                    // def prNumber = env.BRANCH_NAME.split('-')[1]
-                    // sh """
-                    //     gh pr merge ${prNumber} --merge --delete-branch --repo ${env.MAIN_GIT_REPO_URL}
-                    // """
                     sh "gh pr merge ${env.CHANGE_ID} --merge --delete-branch --repo ${env.GIT_URL}"
                 }
             }
         }
-
-        // stage('Generate New SemVer Tag') {
-        //     when {
-        //         branch 'main'
-        //     }
-        //     steps {
-        //         script {
-        //             def currentVersion = sh(script: """
-        //                 gh release list --repo ${env.GIT_URL} --limit 1 --json tagName --jq '.[0].tagName'
-        //             """, returnStdout: true).trim()
-                    
-        //             def newVersion
-
-        //             print currentVersion
-
-        //             if (currentVersion) {
-        //                 def (major, minor, patch) = currentVersion.tokenize('.')
-        //                 newVersion = "${major}.${minor}.${(patch.toInteger() + 1)}"
-        //             } else {
-        //                 // Set the initial version
-        //                 newVersion = "0.1.0"
-        //             }
-
-        //             env.NEW_IMAGE_TAG = newVersion
-        //             echo "New Version: ${env.NEW_IMAGE_TAG}"
-        //         }
-        //     }
-        // }
 
         stage('Determine New Version') {
             when {
@@ -153,15 +132,12 @@ pipeline {
                 script {
                     
                     // Get the commit hash of the latest tag
-                    // def latestTagCommit = sh(script: "git rev-list -n 1 ${latestTag}", returnStdout: true).trim()
-
                     def latestTagCommit = sh(script: "git rev-list --tags --max-count=1", returnStdout: true).trim()
 
                     // Get the latest commit hash in the current branch
                     def latestCommit = sh(script: "git rev-parse HEAD", returnStdout: true).trim()
 
                     // Get the latest tag
-                    // def latestTag = sh(script: "git describe --tags ${latestTagCommit}", returnStdout: true).trim()
                     def latestTag = sh(script: "git ls-remote --tags origin | grep -Eo 'v[0-9.]+\$'", returnStdout: true).trim()
 
                     echo "Latest tag: ${latestTag}"
@@ -174,7 +150,7 @@ pipeline {
                         error("Aborting the build.")
                     }
 
-                    // Parse the latest version
+                    // Parse the latest version, note that tags starts with v (example v0.1.0)
                     def (major, minor, patch) = latestTag.replace("v", "").tokenize('.')
 
                     // Determine the new version (example: increment patch)
@@ -196,7 +172,6 @@ pipeline {
             steps {
                 script {
                     // Get the merged PRs since the last release
-                    // gh pr list --repo ${env.GIT_URL} --state merged --json number,headRefName,title --jq '.[] | {number, headRefName, title}'
                     def prList = sh(script: """
                         gh pr list --repo ${env.GIT_URL} --state merged --json number,headRefName,title
                     """, returnStdout: true).trim()
@@ -229,6 +204,7 @@ pipeline {
                             git tag -a -f ${env.NEW_IMAGE_TAG} -m "${env.VERSION_NOTES}"
                         """
                     } 
+
                     withCredentials([usernamePassword(credentialsId: 'deviant-devops',
                         passwordVariable: 'PASSWORD',
                         usernameVariable: 'USERNAME')]) {
@@ -237,8 +213,6 @@ pipeline {
                             """ 
                         }
                     
-
-                    // Create a GitHub release with release notes
                     sh """
                         gh release create ${env.NEW_IMAGE_TAG} \
                             --notes "${env.VERSION_NOTES}" \
@@ -249,14 +223,13 @@ pipeline {
         }
 
         stage('Build and Push Docker Image to Docker Hub') {
-            when { // Only run steps if pull request
+            when {
                 branch 'MAIN'
             }
             steps {
                 script {
                     withCredentials([usernamePassword(credentialsId: 'docker-hub-deviantdevops', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
-                        // Log in to Docker Hub
-                        sh 'echo $DOCKER_PASSWORD | docker login -u ${DOCKER_USERNAME} --password-stdin' // use single quotes for sensitive info like passwords
+                        sh 'echo $DOCKER_PASSWORD | docker login -u ${DOCKER_USERNAME} --password-stdin'
                         def imageName = "${DOCKER_USERNAME}/${env.REPO_NAME}:latest"
                         def imageName2 = "${DOCKER_USERNAME}/${env.REPO_NAME}:v${env.NEW_IMAGE_TAG}"
                         sh "docker build -t ${imageName} ."
