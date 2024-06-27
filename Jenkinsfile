@@ -129,6 +129,8 @@ pipeline {
                     
                     def newVersion
 
+                    print currentVersion
+
                     if (currentVersion) {
                         def (major, minor, patch) = currentVersion.tokenize('.')
                         newVersion = "${major}.${minor}.${(patch.toInteger() + 1)}"
