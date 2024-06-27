@@ -151,14 +151,18 @@ pipeline {
             }
             steps {
                 script {
-                    // Get the latest tag
-                    def latestTag = sh(script: "git describe --tags `git rev-list --tags --max-count=1`", returnStdout: true).trim()
-
+                    
                     // Get the commit hash of the latest tag
-                    def latestTagCommit = sh(script: "git rev-list -n 1 ${latestTag}", returnStdout: true).trim()
+                    // def latestTagCommit = sh(script: "git rev-list -n 1 ${latestTag}", returnStdout: true).trim()
+
+                    def latestTagCommit = sh(script: "git rev-list --tags --max-count=1", returnStdout: true).trim()
 
                     // Get the latest commit hash in the current branch
                     def latestCommit = sh(script: "git rev-parse HEAD", returnStdout: true).trim()
+
+                    // Get the latest tag
+                    def latestTag = sh(script: "git describe --tags ${latestTagCommit}", returnStdout: true).trim()
+
 
                     echo "Latest tag: ${latestTag}"
                     echo "Latest tag commit: ${latestTagCommit}"
