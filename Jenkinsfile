@@ -167,7 +167,7 @@ pipeline {
                     if (latestTagCommit == latestCommit) {
                         echo "No new commits since the latest tag. Skipping version update."
                         currentBuild.result = 'ABORTED'
-                        return
+                        error("Aborting the build.")
                     }
 
                     // Parse the latest version
