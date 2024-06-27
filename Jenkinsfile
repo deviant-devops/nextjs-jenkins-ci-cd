@@ -20,12 +20,7 @@ pipeline {
     }
 
     stages {
-        stage('Clean Workspace') {
-            steps {
-                deleteDir() // This will delete the workspace
-            }
-        }
-        
+
         stage('Check Build ID') {
             steps {
                 echo "Running ${env.BUILD_ID} on ${env.JENKINS_URL}, PR-${env.CHANGE_ID}"
@@ -291,6 +286,12 @@ pipeline {
                     }
                 }
             }
+        }
+    }
+    post {
+        always {
+            // Clean workspace after the pipeline run
+            cleanWs()
         }
     }
 }
