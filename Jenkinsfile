@@ -282,7 +282,8 @@ pipeline {
                             cd ${repoName}
                             git add ${env.DEPLOYMENT_FILE_PATH}
                             git commit -m "Update image tag to ${env.NEW_IMAGE_TAG}"
-                            git push --repo=https://$USERNAME:$PASSWORD@github.com/deviant-devops/nextjs-jenkins-deployment.git main
+                            git remote set-url origin https://$USERNAME:$PASSWORD@github.com/deviant-devops/nextjs-jenkins-deployment.git
+                            git push origin main
                         """
                     }
                 }
