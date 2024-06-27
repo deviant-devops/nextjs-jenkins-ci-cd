@@ -125,7 +125,7 @@ pipeline {
                 script {
                     def currentVersion = sh(script: """
                         gh release list --repo ${env.GIT_URL} --limit 1 --json tagName --jq '.[0].tagName'
-                    """, returnStdout: true).trim() == '0'
+                    """, returnStdout: true).trim()
                     
                     def newVersion
 
