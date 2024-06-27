@@ -132,6 +132,7 @@ pipeline {
             }
             steps {
                 script {
+                    sh "git pull"
                     
                     // Get the commit hash of the latest tag
                     def latestTagCommit = sh(script: "git rev-list --tags --max-count=1", returnStdout: true).trim()
