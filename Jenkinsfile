@@ -205,16 +205,14 @@ pipeline {
 
                     if (!tagExists) {
                         sh """
-                            git tag -a -f ${env.NEW_IMAGE_TAG} -m "${env.VERSION_NOTES}"
+                            git tag -a ${env.NEW_IMAGE_TAG} -m "${env.VERSION_NOTES}"
                         """
                     } 
 
                     withCredentials([usernamePassword(credentialsId: 'deviant-devops',
                         passwordVariable: 'PASSWORD',
                         usernameVariable: 'USERNAME')]) {
-                            sh """
-                                git push https://$USERNAME:$PASSWORD@github.com/${env.REPO_INFO}.git ${env.NEW_IMAGE_TAG} -f
-                            """ 
+                            sh 'git push https://$USERNAME:$PASSWORD@github.com/${env.REPO_INFO}.git ${env.NEW_IMAGE_TAG}'
                         }
                     
                     sh """
